@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="BooksIo2026.Consola/BooksIo2026.Consola.csproj" />
+  <Project Path="BooksIo2026.Data/BooksIo2026.Data.csproj" />
+  <Project Path="BooksIo2026.Entities/BooksIo2026.Entities.csproj" />
+  <Project Path="BooksIo2026.Service/BooksIo2026.Service.csproj" Id="eef937f7-03be-4cee-ae63-59b8ac6ba9d6" />
+</Solution>
