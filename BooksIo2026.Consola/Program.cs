@@ -143,7 +143,7 @@ internal class Program
         var authorToDelete = _service.GetById(authorId);
         if (authorToDelete != null)
         {
-            Console.Write($"Are you sure to delete {authorToDelete}? (y/n): ");
+            Console.Write($"Are you sure to delete {authorToDelete.FirstName} {authorToDelete.LastName}? (y/n): ");
             var response = Console.ReadLine();
             if (response!.ToLower() == "y")
             {
