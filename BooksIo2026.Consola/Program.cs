@@ -52,6 +52,8 @@ internal class Program
                 Console.WriteLine("Publisher Manager");
                 Console.WriteLine("1. List Publishers");
                 Console.WriteLine("2. Add Publisher");
+                Console.WriteLine("3. Delete");
+                Console.WriteLine("4. Update");
                 Console.WriteLine("0. Back");
                 Console.Write("Select an option:");
 
@@ -65,6 +67,12 @@ internal class Program
                     case "2":
                         AddPublisher(service);
                         break;
+                    case "3":
+                        DeletePublisher(service);
+                        break;
+                    case "4":
+                        UpdatePublisher(service);
+                        break;
                     case "0":
                         return;
                 }
@@ -72,27 +80,156 @@ internal class Program
             } while (true);
         }
     }
+    private static void ShowPublishers(IPublisherService service)
+    {
+        var publishers = service.GetAll();
+
+        foreach (var p in publishers)
+        {
+            Console.WriteLine($"Id: {p.PublisherId,4} Publisher: {p.Name,-30}");
+        }
+    }
+
+    private static void UpdatePublisher(IPublisherService service)
+    {
+        Console.Clear();
+        Console.WriteLine("Update a Publisher");
+
+        ShowPublishers(service);
+
+        Console.Write("Select an ID of the Publisher to update:");
+        var id = int.Parse(Console.ReadLine()!);
+
+        var publisherToUpdate = service.GetForUpdate(id);
+
+        if (publisherToUpdate != null)
+        {
+            Console.WriteLine($"Publisher to update: {publisherToUpdate.Name}");
+
+            Console.Write("New Name (ENTER to keep the same): ");
+            var inputName = Console.ReadLine();
+            var newName = !string.IsNullOrWhiteSpace(inputName) ? inputName : publisherToUpdate.Name;
+
+            Console.Write("New Country (ENTER to keep the same): ");
+            var inputCountry = Console.ReadLine();
+            var newCountry = !string.IsNullOrWhiteSpace(inputCountry) ? inputCountry : publisherToUpdate.Country;
+
+            Console.Write("Is Active? (y/n): ");
+            bool isActive = Console.ReadLine()!.ToLower() == "y";
+
+            Console.Write("Confirm the changes: (y/n): ");
+            var response = Console.ReadLine();
+
+            if (response!.ToLower() == "y")
+            {
+                publisherToUpdate.Name = newName;
+                publisherToUpdate.Country = newCountry;
+
+                var result = service.Update(publisherToUpdate, isActive);
+
+                if (!result.Success)
+                {
+                    foreach (var error in result.Errors)
+                    {
+                        Console.WriteLine(error);
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Publisher updated successfully.");
+                }
+            }
+            else
+            {
+                Console.WriteLine("Update cancelled.");
+            }
+        }
+        else
+        {
+            Console.WriteLine("Publisher does not exist.");
+        }
+
+        Console.WriteLine("Press any key to continue...");
+        Console.ReadLine();
+    }
+
+    private static void DeletePublisher(IPublisherService service)
+    {
+        Console.Clear();
+        Console.WriteLine("Delete a Publisher");
+        Console.WriteLine("List of Available Publishers");
+
+        ShowPublishers(service);
+
+        Console.Write("Select Id of the Publisher to delete:");
+        var id = int.Parse(Console.ReadLine()!);
+
+        var publisher = service.GetById(id);
+
+        if (publisher != null)
+        {
+            Console.Write($"Are you sure to delete {publisher.Name}? (y/n): ");
+            var response = Console.ReadLine();
+
+            if (response!.ToLower() == "y")
+            {
+                var result = service.Delete(id);
+
+                if (!result.Success)
+                {
+                    foreach (var error in result.Errors)
+                    {
+                        Console.WriteLine(error);
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Publisher deleted successfully.");
+                }
+            }
+            else
+            {
+                Console.WriteLine("Deletion cancelled.");
+            }
+        }
+        else
+        {
+            Console.WriteLine("Publisher not found.");
+        }
+
+        Console.WriteLine("Press any key to continue.");
+        Console.ReadLine();
+    }
 
     private static void AddPublisher(IPublisherService service)
     {
         Console.Clear();
-        Console.WriteLine("Add Publisher");
-
-        var dto = new PublisherCreateDto();
+        Console.WriteLine("Add a New Publisher");
 
         Console.Write("Name: ");
-        dto.Name = Console.ReadLine()!;
+        var name = Console.ReadLine();
 
         Console.Write("Country: ");
-        dto.Country = Console.ReadLine()!;
+        var country = Console.ReadLine();
 
         Console.Write("Founded Date (yyyy-mm-dd): ");
-        dto.FoundedDate = DateTime.Parse(Console.ReadLine()!);
+        var foundedDate = DateTime.Parse(Console.ReadLine()!);
 
         Console.Write("Email: ");
-        dto.Email = Console.ReadLine();
+        var email = Console.ReadLine();
 
-        var result = service.Add(dto);
+        Console.Write("Is Active? (y/n): ");
+        bool isActive = Console.ReadLine()!.ToLower() == "y";
+
+        var dto = new PublisherCreateDto
+        {
+            Name = name!,
+            Country = country!,
+            FoundedDate = foundedDate,
+            Email = email
+        };
+
+        var result = service.Add(dto, isActive);
 
         if (!result.Success)
         {
@@ -103,11 +240,11 @@ internal class Program
         }
         else
         {
-            Console.WriteLine("Publisher added successfully");
+            Console.WriteLine("Publisher added successfully.");
         }
 
-        Console.WriteLine("Press any key...");
-        Console.ReadLine();
+        Console.WriteLine("Press any key to continue...");
+        Console.ReadKey();
     }
 
     private static void ListPublishers(IPublisherService service)
@@ -115,17 +252,12 @@ internal class Program
         Console.Clear();
         Console.WriteLine("List of Publishers");
 
-        var publishers = service.GetAll();
+        ShowPublishers(service);
 
-        foreach (var p in publishers)
-        {
-            Console.WriteLine($"{p.PublisherId} - {p.Name} - {p.Country}");
-        }
-
-        Console.WriteLine("Press any key...");
+        Console.WriteLine("Press any key to continue...");
         Console.ReadLine();
     }
-
+    //Aca empieza author y termina publisher 
     private static void AuthorsMenu()
     {
         using (var scoped = provider.CreateScope())
