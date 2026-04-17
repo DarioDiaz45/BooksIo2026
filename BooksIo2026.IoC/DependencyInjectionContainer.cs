@@ -17,11 +17,14 @@ namespace BooksIo2026.IoC
             var services = new ServiceCollection();
             services.AddDbContext<BooksDbContext>();
             services.AddScoped<IAuthorRepository, AuthorRepository>();
-            // services.AddScoped<IBookRepository, BookRepository>();
+
             services.AddScoped<IAuthorService, AuthorService>();
             services.AddScoped<IValidator<Author>, AuthorValidator>();
             services.AddScoped<IUnitOfWork, UnitOfWork>();
-            // services.AddScoped<IBookService, BookService>();
+
+            services.AddScoped<IPublisherRepository, PublisherRepository>();
+            services.AddScoped<IPublisherService, PublisherService>();
+
             return services.BuildServiceProvider();
         }
     }

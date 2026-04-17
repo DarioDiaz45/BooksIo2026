@@ -1,13 +1,10 @@
 ﻿using BooksIo2026.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace BooksIo2026.Data.Configurations
 {
-    public class AuthorEntityTypeConfiguration : IEntityTypeConfiguration<Author>  
+    public class AuthorEntityTypeConfiguration : IEntityTypeConfiguration<Author>
     {
         public void Configure(EntityTypeBuilder<Author> builder)
         {

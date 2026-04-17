@@ -1,6 +1,7 @@
 ﻿using BooksIo2026.Data;
 using BooksIo2026.IoC;
 using BooksIo2026.Service.DTOs.Author;
+using BooksIo2026.Service.DTOs.Publisher;
 using BooksIo2026.Service.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -15,6 +16,7 @@ internal class Program
             Console.WriteLine("Library Manager");
             Console.WriteLine("1. Authors");
             Console.WriteLine("2. Books");
+            Console.WriteLine("3. Publishers");
             Console.WriteLine("0. Exit");
             Console.Write("Select an option:");
             var option = Console.ReadLine();
@@ -26,6 +28,9 @@ internal class Program
                 case "2":
                     // BooksMenu();
                     break;
+                case "3":
+                    PublishersMenu();
+                    break;
                 case "0":
                     return;
                 default:
@@ -33,6 +38,92 @@ internal class Program
             }
         } while (true);
 
+    }
+
+    private static void PublishersMenu()
+    {
+        using (var scoped = provider.CreateScope())
+        {
+            var service = scoped.ServiceProvider.GetRequiredService<IPublisherService>();
+
+            do
+            {
+                Console.Clear();
+                Console.WriteLine("Publisher Manager");
+                Console.WriteLine("1. List Publishers");
+                Console.WriteLine("2. Add Publisher");
+                Console.WriteLine("0. Back");
+                Console.Write("Select an option:");
+
+                var option = Console.ReadLine();
+
+                switch (option)
+                {
+                    case "1":
+                        ListPublishers(service);
+                        break;
+                    case "2":
+                        AddPublisher(service);
+                        break;
+                    case "0":
+                        return;
+                }
+
+            } while (true);
+        }
+    }
+
+    private static void AddPublisher(IPublisherService service)
+    {
+        Console.Clear();
+        Console.WriteLine("Add Publisher");
+
+        var dto = new PublisherCreateDto();
+
+        Console.Write("Name: ");
+        dto.Name = Console.ReadLine()!;
+
+        Console.Write("Country: ");
+        dto.Country = Console.ReadLine()!;
+
+        Console.Write("Founded Date (yyyy-mm-dd): ");
+        dto.FoundedDate = DateTime.Parse(Console.ReadLine()!);
+
+        Console.Write("Email: ");
+        dto.Email = Console.ReadLine();
+
+        var result = service.Add(dto);
+
+        if (!result.Success)
+        {
+            foreach (var error in result.Errors)
+            {
+                Console.WriteLine(error);
+            }
+        }
+        else
+        {
+            Console.WriteLine("Publisher added successfully");
+        }
+
+        Console.WriteLine("Press any key...");
+        Console.ReadLine();
+    }
+
+    private static void ListPublishers(IPublisherService service)
+    {
+        Console.Clear();
+        Console.WriteLine("List of Publishers");
+
+        var publishers = service.GetAll();
+
+        foreach (var p in publishers)
+        {
+            Console.WriteLine($"{p.PublisherId} - {p.Name} - {p.Country}");
+        }
+
+        Console.WriteLine("Press any key...");
+        Console.ReadLine();
     }
 
     private static void AuthorsMenu()
