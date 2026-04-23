@@ -3,6 +3,8 @@ using BooksIo2026.Data.Interfaces;
 using BooksIo2026.Entities;
 using BooksIo2026.Service.DTOs.Publisher;
 using BooksIo2026.Service.Interfaces;
+using BooksIo2026.Service.Mappers;
+using FluentValidation;
 
 namespace BooksIo2026.Service.Services
 {
@@ -10,32 +12,36 @@ namespace BooksIo2026.Service.Services
     {
         private readonly IPublisherRepository _repository;
         private readonly IUnitOfWork _unitOfWork;
-        public PublisherService(IPublisherRepository repository, IUnitOfWork unitOfWork)
+        private readonly IValidator<Publisher> _validator;
+        public PublisherService(IPublisherRepository repository, IUnitOfWork unitOfWork, IValidator<Publisher> validator)
         {
             _repository = repository;
             _unitOfWork = unitOfWork;
+            _validator = validator;
         }
         public (bool Success, List<string> Errors) Add(PublisherCreateDto dto, bool isActive)
         {
+            var publisher = PublisherMapper.toEntity(dto);
+
+            publisher.IsActive = isActive;
+
+            var result = _validator.Validate(publisher);
+
+            if (!result.IsValid)
+            {
+                var errors = result.Errors.Select(e => e.ErrorMessage).ToList();
+                return (false, errors);
+            }
+
             try
             {
-                var publisher = new Publisher
-                {
-                    Name = dto.Name,
-                    Country = dto.Country,
-                    FoundedDate = dto.FoundedDate,
-                    Email = dto.Email,
-                    IsActive = isActive
-                };
-
                 _repository.Add(publisher);
                 _unitOfWork.Save();
-
                 return (true, new List<string>());
             }
-            catch
+            catch (Exception)
             {
-                return (false, new List<string> { "Error creating publisher" });
+                return (false, new List<string> { "An error occurred while adding the publisher." });
             }
         }
 
@@ -47,9 +53,9 @@ namespace BooksIo2026.Service.Services
                 _unitOfWork.Save();
                 return (true, new List<string>());
             }
-            catch
+            catch (Exception)
             {
-                return (false, new List<string> { "Error deleting publisher" });
+                return (false, new List<string> { "An error occurred while deleting the publisher." });
             }
         }
 
@@ -57,12 +63,8 @@ namespace BooksIo2026.Service.Services
         public List<PublisherListDto> GetAll()
         {
             return _repository.GetAll()
-            .Select(p => new PublisherListDto
-            {
-                PublisherId = p.PublisherId,
-                Name = p.Name,
-                Country = p.Country
-            }).ToList();
+                 .Select(p => PublisherMapper.ToPublisherListDto(p))
+                 .ToList();
         }
 
         public PublisherDetailsDto GetById(int id)
@@ -70,36 +72,25 @@ namespace BooksIo2026.Service.Services
             var publisher = _repository.GetById(id);
             if (publisher == null) return null!;
 
-            return new PublisherDetailsDto
-            {
-                PublisherId = publisher.PublisherId,
-                Name = publisher.Name,
-                Country = publisher.Country,
-                FoundedDate = publisher.FoundedDate,
-                Email = publisher.Email
-            };
+            return PublisherMapper.ToPublisherDetailsDto(publisher);
         }
 
         public PublisherUpdateDto? GetForUpdate(int id)
         {
-            var p = _repository.GetById(id);
-            if (p == null) return null;
+            var publisher = _repository.GetById(id);
+            if (publisher == null) return null;
 
-            return new PublisherUpdateDto
-            {
-                PublisherId = p.PublisherId,
-                Name = p.Name,
-                Country = p.Country,
-                FoundedDate = p.FoundedDate,
-                Email = p.Email
-            };
+            return PublisherMapper.ToPublisherUpdateDto(publisher);
         }
 
         public (bool Success, List<string> Errors) Update(PublisherUpdateDto dto, bool isActive)
         {
             var publisher = _repository.GetById(dto.PublisherId);
+
             if (publisher == null)
-                return (false, new List<string> { "Publisher not found" });
+            {
+                return (false, new List<string> { "Publisher not found." });
+            }
 
             publisher.Name = dto.Name;
             publisher.Country = dto.Country;
@@ -107,14 +98,22 @@ namespace BooksIo2026.Service.Services
             publisher.Email = dto.Email;
             publisher.IsActive = isActive;
 
+            var result = _validator.Validate(publisher);
+
+            if (!result.IsValid)
+            {
+                var errors = result.Errors.Select(e => e.ErrorMessage).ToList();
+                return (false, errors);
+            }
+
             try
             {
                 _unitOfWork.Save();
                 return (true, new List<string>());
             }
-            catch
+            catch (Exception)
             {
-                return (false, new List<string> { "Error updating publisher" });
+                return (false, new List<string> { "An error occurred while updating the publisher." });
             }
         }
     }
