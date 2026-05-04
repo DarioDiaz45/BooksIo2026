@@ -117,7 +117,7 @@ internal class Program
 
                 var result = service.Update(bookToUpdate, isActive);
 
-                if (!result.Success)
+                if (result.IsFailure)
                 {
                     foreach (var error in result.Errors)
                     {
@@ -165,7 +165,7 @@ internal class Program
             {
                 var result = service.Delete(id);
 
-                if (!result.Success)
+                if (result.IsFailure)
                 {
                     foreach (var error in result.Errors)
                     {
@@ -242,7 +242,7 @@ internal class Program
 
         var result = bookService.Add(dto);
 
-        Console.WriteLine(result.Success ? "Book added successfully." : "Error...");
+        Console.WriteLine(result.IsSuccess ? "Book added successfully." : "Error...");
         Console.ReadKey();
     }
 
@@ -355,7 +355,7 @@ internal class Program
 
                 var result = service.Update(publisherToUpdate, isActive);
 
-                if (!result.Success)
+                if (result.IsFailure)
                 {
                     foreach (var error in result.Errors)
                     {
@@ -403,7 +403,7 @@ internal class Program
             {
                 var result = service.Delete(id);
 
-                if (!result.Success)
+                if (result.IsFailure)
                 {
                     foreach (var error in result.Errors)
                     {
@@ -459,7 +459,7 @@ internal class Program
 
         var result = service.Add(dto, isActive);
 
-        if (!result.Success)
+        if (result.IsFailure)
         {
             foreach (var error in result.Errors)
             {
@@ -560,7 +560,7 @@ internal class Program
                     authorToUpdate!.FirstName = newFirstName;
                     authorToUpdate.LastName = newLastName;
                     var result = service.Update(authorToUpdate);
-                    if (!result.Success)
+                    if (result.IsFailure)
                     {
                         foreach (var error in result.Errors)
                         {
@@ -606,7 +606,7 @@ internal class Program
             if (response!.ToLower() == "y")
             {
                 var result = service.Delete(authorToDelete.AuthorId);
-                if (!result.Success)
+                if (result.IsFailure)
                 {
                     foreach (var error in result.Errors)
                     {
@@ -651,7 +651,7 @@ internal class Program
             LastName = lastName!
         };
         var result = service.Add(authorDto);
-        if (!result.Success)
+        if (result.IsFailure)
         {
             foreach (var error in result.Errors)
             {

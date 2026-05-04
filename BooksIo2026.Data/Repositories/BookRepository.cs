@@ -40,5 +40,10 @@ namespace BooksIo2026.Data.Repositories
                 _context.Books.Remove(book);
             }
         }
+
+        public bool Exist(string title, int bookId)
+        {
+            return _context.Books.Any(b => b.Title == title && b.BookId != bookId);
+        }
     }
 }

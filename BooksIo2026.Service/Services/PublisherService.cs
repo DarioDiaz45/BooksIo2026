@@ -1,6 +1,7 @@
 ﻿using BooksIo2026.Data;
 using BooksIo2026.Data.Interfaces;
 using BooksIo2026.Entities;
+using BooksIo2026.Service.Common;
 using BooksIo2026.Service.DTOs.Publisher;
 using BooksIo2026.Service.Interfaces;
 using BooksIo2026.Service.Mappers;
@@ -18,43 +19,43 @@ namespace BooksIo2026.Service.Services
             _uow = unitOfWork;
             _validator = validator;
         }
-        public (bool Success, List<string> Errors) Add(PublisherCreateDto dto, bool isActive)
+        public Result Add(PublisherCreateDto publisherDto, bool isActive)
         {
-            var publisher = PublisherMapper.toEntity(dto);
-
-            publisher.IsActive = isActive;
-
+            var publisher = PublisherMapper.toEntity(publisherDto);
             var result = _validator.Validate(publisher);
-
             if (!result.IsValid)
             {
-                var errors = result.Errors.Select(e => e.ErrorMessage).ToList();
-                return (false, errors);
+                return Result.Failure(result.Errors.Select(e => e.ErrorMessage).ToList());
             }
-
+            if (!_uow.Publishers.Exist(publisher.Name, publisher.PublisherId))
+            {
+                return Result.Failure("Publisher already exist!!!");
+            }
             try
             {
                 _uow.Publishers.Add(publisher);
                 _uow.Save();
-                return (true, new List<string>());
+                return Result.Success();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return (false, new List<string> { "An error occurred while adding the publisher." });
+
+                return Result.Failure(ex.Message);
             }
+
         }
 
-        public (bool Success, List<string> Errors) Delete(int id)
+        public Result Delete(int id)
         {
             try
             {
                 _uow.Publishers.Delete(id);
                 _uow.Save();
-                return (true, new List<string>());
+                return Result.Success();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return (false, new List<string> { "An error occurred while deleting the publisher." });
+                return Result.Failure(ex.Message);
             }
         }
 
@@ -82,13 +83,13 @@ namespace BooksIo2026.Service.Services
             return PublisherMapper.ToPublisherUpdateDto(publisher);
         }
 
-        public (bool Success, List<string> Errors) Update(PublisherUpdateDto dto, bool isActive)
+        public Result Update(PublisherUpdateDto dto, bool isActive)
         {
             var publisher = _uow.Publishers.GetById(dto.PublisherId);
 
             if (publisher == null)
             {
-                return (false, new List<string> { "Publisher not found." });
+                return Result.Failure("Publisher not found.");
             }
 
             publisher.Name = dto.Name;
@@ -101,18 +102,17 @@ namespace BooksIo2026.Service.Services
 
             if (!result.IsValid)
             {
-                var errors = result.Errors.Select(e => e.ErrorMessage).ToList();
-                return (false, errors);
+                return Result.Failure(result.Errors.Select(e => e.ErrorMessage).ToList());
             }
 
             try
             {
                 _uow.Save();
-                return (true, new List<string>());
+                return Result.Success();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return (false, new List<string> { "An error occurred while updating the publisher." });
+                return Result.Failure(ex.Message);
             }
         }
     }

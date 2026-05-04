@@ -8,5 +8,6 @@ namespace BooksIo2026.Data.Interfaces
         Publisher? GetById(int id);
         void Add(Publisher publisher);
         void Delete(int id);
+        bool Exist(string name, int? publisherId = null);
     }
 }

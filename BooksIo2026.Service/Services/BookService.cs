@@ -1,6 +1,7 @@
 ﻿using BooksIo2026.Data;
 using BooksIo2026.Data.Interfaces;
 using BooksIo2026.Entities;
+using BooksIo2026.Service.Common;
 using BooksIo2026.Service.DTOs.Book;
 using BooksIo2026.Service.Interfaces;
 using BooksIo2026.Service.Mappers;
@@ -18,41 +19,45 @@ namespace BooksIo2026.Service.Services
             _uow = unitOfWork;
             _validator = validator;
         }
-        public (bool Success, List<string> Errors) Add(BookCreateDto dto)
+        public Result Add(BookCreateDto bookDto)
         {
-            var book = BookMapper.toEntity(dto);
+            var book = BookMapper.toEntity(bookDto);
 
             var result = _validator.Validate(book);
-
             if (!result.IsValid)
             {
-                var errors = result.Errors.Select(e => e.ErrorMessage).ToList();
-                return (false, errors);
-            }
 
+                return Result.Failure(result.Errors.Select(e => e.ErrorMessage).ToList());
+            }
+            if (_uow.Books.Exist(book.Title, book.BookId))
+            {
+                return Result.Failure("Book already exist!!!");
+
+            }
             try
             {
                 _uow.Books.Add(book);
                 _uow.Save();
-                return (true, new List<string>());
+                return Result.Success();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return (false, new List<string> { "An error occurred while adding the book." });
+
+                return Result.Failure(ex.Message);
             }
         }
 
-        public (bool Success, List<string> Errors) Delete(int id)
+        public Result Delete(int id)
         {
             try
             {
                 _uow.Books.Delete(id);
                 _uow.Save();
-                return (true, new List<string>());
+                return Result.Success();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return (false, new List<string> { "An error occurred while deleting the book." });
+                return Result.Failure(ex.Message);
             }
         }
 
@@ -79,13 +84,13 @@ namespace BooksIo2026.Service.Services
             return BookMapper.ToBookUpdateDto(book);
         }
 
-        public (bool Success, List<string> Errors) Update(BookUpdateDto dto, bool isActive)
+        public Result Update(BookUpdateDto dto, bool isActive)
         {
             var book = _uow.Books.GetById(dto.BookId);
 
             if (book == null)
             {
-                return (false, new List<string> { "Book not found." });
+                return Result.Failure("Book not found.");
             }
 
             book.Title = dto.Title;
@@ -99,18 +104,18 @@ namespace BooksIo2026.Service.Services
 
             if (!result.IsValid)
             {
-                var errors = result.Errors.Select(e => e.ErrorMessage).ToList();
-                return (false, errors);
+                return Result.Failure( result.Errors.Select(e => e.ErrorMessage).ToList());
+                
             }
 
             try
             {
                 _uow.Save();
-                return (true, new List<string>());
+                return Result.Success();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                return (false, new List<string> { "An error occurred while updating the book." });
+                return Result.Failure(ex.Message);
             }
 
 

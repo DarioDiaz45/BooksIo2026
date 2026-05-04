@@ -26,6 +26,15 @@ namespace BooksIo2026.Data.Repositories
             }
         }
 
+        public bool Exist(string name, int? publisherId = null)
+        {
+            return _context.Publishers.Any(p =>
+                p.Name == name &&
+                (publisherId == null || p.PublisherId != publisherId));
+        }
+
+
+
         public List<Publisher> GetAll()
         {
             return _context.Publishers.ToList();
