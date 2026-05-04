@@ -46,6 +46,8 @@ internal class Program
         using (var scoped = provider.CreateScope())
         {
             var service = scoped.ServiceProvider.GetRequiredService<IBookService>();
+            var authorService = scoped.ServiceProvider.GetRequiredService<IAuthorService>();
+            var publisherService = scoped.ServiceProvider.GetRequiredService<IPublisherService>();
 
             do
             {
@@ -65,7 +67,7 @@ internal class Program
                         ListBooks(service);
                         break;
                     case "2":
-                        AddBook(service);
+                        AddBook(service, authorService, publisherService);
                         break;
                     case "3":
                         DeleteBook(service);
@@ -87,6 +89,8 @@ internal class Program
         Console.WriteLine("Update a Book");
 
         ShowBooks(service);
+        Console.WriteLine("-----------------------------");
+
 
         Console.Write("Select an ID of the Book to update:");
         var id = int.Parse(Console.ReadLine()!);
@@ -187,29 +191,45 @@ internal class Program
         Console.ReadLine();
     }
 
-    private static void AddBook(IBookService service)
+    private static void AddBook(IBookService bookService, IAuthorService authorService, IPublisherService publisherService)
     {
         Console.Clear();
         Console.WriteLine("Add a New Book");
 
-        Console.Write("Title:");
+
+        Console.WriteLine("Authors:");
+        var authors = authorService.GetAll();
+        foreach (var a in authors)
+        {
+            Console.WriteLine($"Id: {a.AuthorId,4} Name: {a.FullName}");
+        }
+
+
+        Console.WriteLine("\nPublishers:");
+        var publishers = publisherService.GetAll();
+        foreach (var p in publishers)
+        {
+            Console.WriteLine($"Id: {p.PublisherId,4} Name: {p.Name}");
+        }
+
+        Console.WriteLine("-----------------------------");
+
+        Console.Write("Title: ");
         var title = Console.ReadLine();
 
-        Console.Write("Author Id:");
+        Console.Write("Author Id: ");
         var authorId = int.Parse(Console.ReadLine()!);
 
-        Console.Write("Publisher Id:");
+        Console.Write("Publisher Id: ");
         var publisherId = int.Parse(Console.ReadLine()!);
 
-        Console.Write("Published Date:(yyyy-mm-dd): ");
+        Console.Write("Published Date (yyyy-mm-dd): ");
         var publishedDate = DateTime.Parse(Console.ReadLine()!);
 
-        Console.Write("Price:");
+        Console.Write("Price: ");
         var price = decimal.Parse(Console.ReadLine()!);
 
-        Console.Write("Is Active? (y/n): ");
-        var input = Console.ReadLine();
-        bool isActive = input!.ToLower() == "y";
+
 
         var dto = new BookCreateDto
         {
@@ -220,21 +240,9 @@ internal class Program
             Price = price
         };
 
-        var result = service.Add(dto, isActive);
+        var result = bookService.Add(dto);
 
-        if (!result.Success)
-        {
-            foreach (var error in result.Errors)
-            {
-                Console.WriteLine(error);
-            }
-        }
-        else
-        {
-            Console.WriteLine("Book added successfully.");
-        }
-
-        Console.WriteLine("Press any key to continue...");
+        Console.WriteLine(result.Success ? "Book added successfully." : "Error...");
         Console.ReadKey();
     }
 
@@ -255,7 +263,7 @@ internal class Program
 
         foreach (var b in books)
         {
-            Console.WriteLine($"Id: {b.BookId,4} Title: {b.Title,-30}");
+            Console.WriteLine($"Id: {b.BookId,4} Title: {b.Title,-25} Author: {b.AuthorName,-25} Publisher: {b.PublisherName,-25}");
         }
     }
     //Aca empieza publisher y termina book
@@ -306,7 +314,7 @@ internal class Program
 
         foreach (var p in publishers)
         {
-            Console.WriteLine($"Id: {p.PublisherId,4} Publisher: {p.Name,-30}");
+            Console.WriteLine($"Id: {p.PublisherId,4} Name: {p.Name,-25} Country: {p.Country}");
         }
     }
 

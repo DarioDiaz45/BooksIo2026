@@ -11,7 +11,7 @@ namespace BooksIo2026.Service.Mappers
             {
                 BookId = book.BookId,
                 Title = book.Title,
-                AuthorName = $"{book.Author.FirstName} {book.Author.LastName}",
+                AuthorName = book.Author.FirstName + " " + book.Author.LastName,
                 PublisherName = book.Publisher.Name
             };
         }

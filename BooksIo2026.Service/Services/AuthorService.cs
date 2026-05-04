@@ -10,14 +10,13 @@ namespace BooksIo2026.Service.Services
 {
     public class AuthorService : IAuthorService
     {
-        private readonly IAuthorRepository _repository;
+        
         private readonly IValidator<Author> _validator;
-        private readonly IUnitOfWork _unitOfWork;
-        public AuthorService(IAuthorRepository repository, IUnitOfWork unitOfWork, IValidator<Author> validator)
+        private readonly IUnitOfWork _uow;
+        public AuthorService(IUnitOfWork unitOfWork, IValidator<Author> validator)
         {
-            _repository = repository;
             _validator = validator;
-            _unitOfWork = unitOfWork;
+            _uow = unitOfWork;
         }
 
 
@@ -31,12 +30,12 @@ namespace BooksIo2026.Service.Services
                 var results = result.Errors.Select(e => e.ErrorMessage).ToList();
                 return (false, results);
             }
-            if (!_repository.Exist(author.FirstName, author.LastName))
+            if (!_uow.Authors.Exist(author.FirstName, author.LastName))
             {
                 try
                 {
-                    _repository.Add(author);
-                    _unitOfWork.Save();
+                    _uow.Authors.Add(author);
+                    _uow.Save();
                     return (true, new List<string>());
                 }
                 catch (Exception)
@@ -55,8 +54,8 @@ namespace BooksIo2026.Service.Services
         {
             try
             {
-                _repository.Delete(id);
-                _unitOfWork.Save();
+                _uow.Authors.Delete(id);
+                _uow.Save();
                 return (true, new List<string>());
             }
             catch (Exception)
@@ -68,19 +67,19 @@ namespace BooksIo2026.Service.Services
 
         public List<AuthorListDto> GetAll()
         {
-            return _repository.GetAll().Select(a => AuthorMapper.ToAuthorListDto(a)).ToList();
+            return _uow.Authors.GetAll().Select(a => AuthorMapper.ToAuthorListDto(a)).ToList();
         }
 
         public AuthorDetailsDto GetById(int id)
         {
-            var author = _repository.GetById(id);
+            var author = _uow.Authors.GetById(id);
             if (author == null) return null!;
             return AuthorMapper.ToAuthorDetailsDto(author);
         }
 
         public AuthorUpdateDto? GetForUpdate(int id)
         {
-            var author = _repository.GetById(id);
+            var author = _uow.Authors.GetById(id);
             if (author == null) return null;
             return AuthorMapper.ToAuthorUpdateDto(author);
 
@@ -89,7 +88,7 @@ namespace BooksIo2026.Service.Services
         public (bool Success, List<string> Errors) Update(AuthorUpdateDto authorDto)
         {
             //var author = AuthorMapper.toEntity(authorDto);
-            var author = _repository.GetById(authorDto.AuthorId);
+            var author = _uow.Authors.GetById(authorDto.AuthorId);
             if (author == null)
             {
                 return (false, new List<string> { "Author not found." });
@@ -105,12 +104,12 @@ namespace BooksIo2026.Service.Services
                 var results = result.Errors.Select(e => e.ErrorMessage).ToList();
                 return (false, results);
             }
-            if (!_repository.Exist(author.FirstName, author.LastName, author.AuthorId))
+            if (!_uow.Authors.Exist(author.FirstName, author.LastName, author.AuthorId))
             {
                 try
                 {
                     //_repository.Update(author);
-                    _unitOfWork.Save();
+                    _uow.Save();
                     return (true, new List<string>());
                 }
                 catch (Exception)

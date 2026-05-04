@@ -10,20 +10,17 @@ namespace BooksIo2026.Service.Services
 {
     public class BookService : IBookService
     {
-        private readonly IBookRepository _repository;
-        private readonly IUnitOfWork _unitOfWork;
+        private readonly IUnitOfWork _uow;
         private readonly IValidator<Book> _validator;
-        public BookService(IBookRepository repository, IUnitOfWork unitOfWork , IValidator<Book> validator)
+        public BookService(IUnitOfWork unitOfWork , IValidator<Book> validator)
         {
-            _repository = repository;
-            _unitOfWork = unitOfWork;
+            
+            _uow = unitOfWork;
             _validator = validator;
         }
-        public (bool Success, List<string> Errors) Add(BookCreateDto dto, bool isActive)
+        public (bool Success, List<string> Errors) Add(BookCreateDto dto)
         {
             var book = BookMapper.toEntity(dto);
-
-            book.IsActive = isActive;
 
             var result = _validator.Validate(book);
 
@@ -35,8 +32,8 @@ namespace BooksIo2026.Service.Services
 
             try
             {
-                _repository.Add(book);
-                _unitOfWork.Save();
+                _uow.Books.Add(book);
+                _uow.Save();
                 return (true, new List<string>());
             }
             catch (Exception)
@@ -49,8 +46,8 @@ namespace BooksIo2026.Service.Services
         {
             try
             {
-                _repository.Delete(id);
-                _unitOfWork.Save();
+                _uow.Books.Delete(id);
+                _uow.Save();
                 return (true, new List<string>());
             }
             catch (Exception)
@@ -61,14 +58,14 @@ namespace BooksIo2026.Service.Services
 
         public List<BookListDto> GetAll()
         {
-            return _repository.GetAll()
+            return _uow.Books.GetAll()
                 .Select(b => BookMapper.ToBookListDto(b))
                 .ToList();
         }
 
         public BookDetailsDto GetById(int id)
         {
-            var book = _repository.GetById(id);
+            var book = _uow.Books.GetById(id);
             if (book == null) return null!;
 
             return BookMapper.ToBookDetailsDto(book);
@@ -76,7 +73,7 @@ namespace BooksIo2026.Service.Services
 
         public BookUpdateDto? GetForUpdate(int id)
         {
-            var book = _repository.GetById(id);
+            var book = _uow.Books.GetById(id);
             if (book == null) return null;
 
             return BookMapper.ToBookUpdateDto(book);
@@ -84,7 +81,7 @@ namespace BooksIo2026.Service.Services
 
         public (bool Success, List<string> Errors) Update(BookUpdateDto dto, bool isActive)
         {
-            var book = _repository.GetById(dto.BookId);
+            var book = _uow.Books.GetById(dto.BookId);
 
             if (book == null)
             {
@@ -108,7 +105,7 @@ namespace BooksIo2026.Service.Services
 
             try
             {
-                _unitOfWork.Save();
+                _uow.Save();
                 return (true, new List<string>());
             }
             catch (Exception)

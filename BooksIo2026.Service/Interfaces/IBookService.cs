@@ -7,7 +7,7 @@ namespace BooksIo2026.Service.Interfaces
         List<BookListDto> GetAll();
         BookDetailsDto GetById(int id);
         BookUpdateDto? GetForUpdate(int id);
-        (bool Success, List<string> Errors) Add(BookCreateDto dto, bool isActive);
+        (bool Success, List<string> Errors) Add(BookCreateDto dto);
         (bool Success, List<string> Errors) Update(BookUpdateDto dto, bool isActive);
         (bool Success, List<string> Errors) Delete(int id);
     }

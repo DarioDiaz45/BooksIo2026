@@ -10,7 +10,8 @@ namespace BooksIo2026.Service.Mappers
             return new PublisherListDto
             {
                 PublisherId = publisher.PublisherId,
-                Name = publisher.Name
+                Name = publisher.Name,
+                Country = publisher.Country
             };
         }
 
