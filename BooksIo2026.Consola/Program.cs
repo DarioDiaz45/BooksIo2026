@@ -432,33 +432,25 @@ internal class Program
     private static void AddPublisher(IPublisherService service)
     {
         Console.Clear();
-        Console.WriteLine("Add a New Publisher");
+        Console.WriteLine("--- Add New Publisher ---");
+
+        var dto = new PublisherCreateDto();
 
         Console.Write("Name: ");
-        var name = Console.ReadLine();
+        dto.Name = Console.ReadLine() ?? "";
 
         Console.Write("Country: ");
-        var country = Console.ReadLine();
+        dto.Country = Console.ReadLine() ?? "";
 
         Console.Write("Founded Date (yyyy-mm-dd): ");
-        var foundedDate = DateTime.Parse(Console.ReadLine()!);
-
-        Console.Write("Email: ");
-        var email = Console.ReadLine();
-
-        Console.Write("Is Active? (y/n): ");
-        bool isActive = Console.ReadLine()!.ToLower() == "y";
-
-        var dto = new PublisherCreateDto
+        if (DateTime.TryParse(Console.ReadLine(), out DateTime date))
         {
-            Name = name!,
-            Country = country!,
-            FoundedDate = foundedDate,
-            Email = email
-        };
+            dto.FoundedDate = date;
+        }
 
-        var result = service.Add(dto, isActive);
-
+        Console.Write("Email (optional): ");
+        dto.Email = Console.ReadLine();
+        var result = service.Add(dto, true);
         if (result.IsFailure)
         {
             foreach (var error in result.Errors)
@@ -468,10 +460,10 @@ internal class Program
         }
         else
         {
-            Console.WriteLine("Publisher added successfully.");
-        }
+            Console.WriteLine("Publisher added succesfully!!!");
 
-        Console.WriteLine("Press any key to continue...");
+        }
+        Console.WriteLine("Press any key to continue");
         Console.ReadKey();
     }
 

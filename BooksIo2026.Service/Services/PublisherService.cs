@@ -27,7 +27,7 @@ namespace BooksIo2026.Service.Services
             {
                 return Result.Failure(result.Errors.Select(e => e.ErrorMessage).ToList());
             }
-            if (!_uow.Publishers.Exist(publisher.Name, publisher.PublisherId))
+            if (_uow.Publishers.Exist(publisher.Name, publisher.PublisherId))
             {
                 return Result.Failure("Publisher already exist!!!");
             }
