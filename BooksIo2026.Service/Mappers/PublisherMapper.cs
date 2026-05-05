@@ -27,7 +27,7 @@ namespace BooksIo2026.Service.Mappers
             };
         }
 
-        public static Publisher toEntity(PublisherUpdateDto dto)
+        public static Publisher ToEntity(PublisherUpdateDto dto)
         {
             return new Publisher
             {

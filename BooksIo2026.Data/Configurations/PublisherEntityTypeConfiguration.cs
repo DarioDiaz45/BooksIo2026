@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace BooksIo2026.Data.Configurations
 {
-    public class PublisherEntityTypeConfiguration :IEntityTypeConfiguration<Publisher>
+    public class PublisherEntityTypeConfiguration : IEntityTypeConfiguration<Publisher>
     {
         public void Configure(EntityTypeBuilder<Publisher> builder)
         {

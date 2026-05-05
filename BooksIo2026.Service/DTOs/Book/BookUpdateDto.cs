@@ -8,6 +8,7 @@
         public int PublisherId { get; set; }
         public DateTime PublishedDate { get; set; }
         public decimal Price { get; set; }
+        public bool IsActive { get; set; }
 
 
     }

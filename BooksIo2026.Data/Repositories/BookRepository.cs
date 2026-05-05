@@ -41,7 +41,7 @@ namespace BooksIo2026.Data.Repositories
             }
         }
 
-        public bool Exist(string title, int bookId)
+        public bool ExistSameName(string title, int bookId)
         {
             return _context.Books.Any(b => b.Title == title && b.BookId != bookId);
         }

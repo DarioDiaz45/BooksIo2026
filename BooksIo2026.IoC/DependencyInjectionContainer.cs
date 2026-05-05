@@ -26,7 +26,7 @@ namespace BooksIo2026.IoC
             services.AddScoped<IPublisherRepository, PublisherRepository>();
             services.AddScoped<IPublisherService, PublisherService>();
             services.AddScoped<IValidator<Publisher>, PublisherValidator>();
-            
+
 
 
             services.AddScoped<IBookService, BookService>();

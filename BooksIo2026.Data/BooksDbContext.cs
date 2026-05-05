@@ -16,10 +16,10 @@ namespace BooksIo2026.Data
 
         }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
-        { 
+        {
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(BooksDbContext).Assembly);
 
-            foreach(var fk in modelBuilder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
+            foreach (var fk in modelBuilder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))
             {
                 fk.DeleteBehavior = DeleteBehavior.Restrict;
             }

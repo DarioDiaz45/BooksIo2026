@@ -3,7 +3,7 @@ using FluentValidation;
 
 namespace BooksIo2026.Service.Validator
 {
-    public class BookValidator:AbstractValidator<Book>
+    public class BookValidator : AbstractValidator<Book>
     {
         public BookValidator()
         {

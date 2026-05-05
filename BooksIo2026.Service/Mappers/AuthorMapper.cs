@@ -24,7 +24,7 @@ namespace BooksIo2026.Service.Mappers
             };
 
         }
-       
+
         public static Author toEntity(AuthorUpdateDto authorDto)
         {
             return new Author
@@ -47,7 +47,7 @@ namespace BooksIo2026.Service.Mappers
         {
             return new Author
             {
-               
+
                 FirstName = authorDto.FirstName,
                 LastName = authorDto.LastName
             };

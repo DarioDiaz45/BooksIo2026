@@ -1,5 +1,4 @@
 ﻿using BooksIo2026.Data;
-using BooksIo2026.Data.Interfaces;
 using BooksIo2026.Entities;
 using BooksIo2026.Service.Common;
 using BooksIo2026.Service.DTOs.Book;
@@ -13,9 +12,9 @@ namespace BooksIo2026.Service.Services
     {
         private readonly IUnitOfWork _uow;
         private readonly IValidator<Book> _validator;
-        public BookService(IUnitOfWork unitOfWork , IValidator<Book> validator)
+        public BookService(IUnitOfWork unitOfWork, IValidator<Book> validator)
         {
-            
+
             _uow = unitOfWork;
             _validator = validator;
         }
@@ -29,7 +28,7 @@ namespace BooksIo2026.Service.Services
 
                 return Result.Failure(result.Errors.Select(e => e.ErrorMessage).ToList());
             }
-            if (_uow.Books.Exist(book.Title, book.BookId))
+            if (_uow.Books.ExistSameName(book.Title, book.BookId))
             {
                 return Result.Failure("Book already exist!!!");
 
@@ -49,6 +48,11 @@ namespace BooksIo2026.Service.Services
 
         public Result Delete(int id)
         {
+            var book = _uow.Books.GetById(id);
+            if (book == null)
+            {
+                return Result.Failure("Book not found.");
+            }
             try
             {
                 _uow.Books.Delete(id);
@@ -84,30 +88,34 @@ namespace BooksIo2026.Service.Services
             return BookMapper.ToBookUpdateDto(book);
         }
 
-        public Result Update(BookUpdateDto dto, bool isActive)
+        public Result Update(BookUpdateDto bookDto, bool isActive)
         {
-            var book = _uow.Books.GetById(dto.BookId);
-
-            if (book == null)
-            {
-                return Result.Failure("Book not found.");
-            }
-
-            book.Title = dto.Title;
-            book.AuthorId = dto.AuthorId;
-            book.PublisherId = dto.PublisherId;
-            book.PublishedDate = dto.PublishedDate;
-            book.Price = dto.Price;
-            book.IsActive = isActive;
-
-            var result = _validator.Validate(book);
-
+            var bookToValidate = BookMapper.toEntity(bookDto);
+            var result = _validator.Validate(bookToValidate);
             if (!result.IsValid)
             {
-                return Result.Failure( result.Errors.Select(e => e.ErrorMessage).ToList());
-                
+                return Result.Failure(result.Errors.Select(e => e.ErrorMessage).ToList());
             }
 
+            Book? book = _uow.Books.GetById(bookDto.BookId);
+            if (book == null)
+            {
+                return Result.Failure("Book Not Found");
+
+            }
+
+            book.Title = bookDto.Title;
+            book.AuthorId = bookDto.AuthorId;
+            book.PublisherId = bookDto.PublisherId;
+            book.PublishedDate = bookDto.PublishedDate;
+            book.Price = bookDto.Price;
+            book.IsActive = bookDto.IsActive;
+
+            if (_uow.Books.ExistSameName(book.Title, book.BookId))
+            {
+                return Result.Failure("Book already exist!!!");
+
+            }
             try
             {
                 _uow.Save();
@@ -115,6 +123,7 @@ namespace BooksIo2026.Service.Services
             }
             catch (Exception ex)
             {
+
                 return Result.Failure(ex.Message);
             }
 

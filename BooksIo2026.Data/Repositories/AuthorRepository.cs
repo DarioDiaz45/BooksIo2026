@@ -27,20 +27,10 @@ namespace BooksIo2026.Data.Repositories
             _context.Authors.Remove(author);
         }
 
-        public bool Exist(string firstName, string lastName, int? authorId = null)
+        public bool ExistSameName(string firstName, string lastName, int? authorId = null)
         {
+            return _context.Authors.Any(a => a.FirstName == firstName && a.LastName == lastName && a.AuthorId != authorId);
 
-            Author? author;
-            if (authorId == null)
-            {
-                author = _context.Authors.FirstOrDefault(a => a.FirstName == firstName && a.LastName == lastName);
-
-            }
-            else
-            {
-                author = _context.Authors.FirstOrDefault(a => a.FirstName == firstName && a.LastName == lastName && a.AuthorId != authorId);
-            }
-            return author != null;
         }
 
         public List<Author> GetAll()
@@ -52,6 +42,11 @@ namespace BooksIo2026.Data.Repositories
         public Author GetById(int id)
         {
             return _context.Authors.Find(id)!;
+        }
+
+        public bool HasBooks(int id)
+        {
+            return _context.Books.Any(b => b.AuthorId == id);
         }
 
         public void Update(Author author)
