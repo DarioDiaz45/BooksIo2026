@@ -65,27 +65,28 @@ namespace BooksIo2026.Service.Services
             }
         }
 
-        public List<BookListDto> GetAll()
+        public Result<List<BookListDto>> GetAll()
         {
-            return _uow.Books.GetAll()
+            var books = _uow.Books.GetAll()
                 .Select(b => BookMapper.ToBookListDto(b))
                 .ToList();
+            return Result<List<BookListDto>>.Success(books);
         }
 
-        public BookDetailsDto GetById(int id)
+        public Result<BookListDto> GetById(int id)
         {
             var book = _uow.Books.GetById(id);
-            if (book == null) return null!;
+            if (book == null) return Result<BookListDto>.Failure("Book not found.");
 
-            return BookMapper.ToBookDetailsDto(book);
+            return Result<BookListDto>.Success(BookMapper.ToBookListDto(book));
         }
 
-        public BookUpdateDto? GetForUpdate(int id)
+        public Result<BookUpdateDto> GetForUpdate(int id)
         {
             var book = _uow.Books.GetById(id);
-            if (book == null) return null;
+            if (book == null) return Result<BookUpdateDto>.Failure("Book not found.");
 
-            return BookMapper.ToBookUpdateDto(book);
+            return Result<BookUpdateDto>.Success(BookMapper.ToBookUpdateDto(book));
         }
 
         public Result Update(BookUpdateDto bookDto, bool isActive)

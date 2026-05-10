@@ -72,24 +72,25 @@ namespace BooksIo2026.Service.Services
             }
         }
 
-        public List<AuthorListDto> GetAll()
+        public Result<List<AuthorListDto>> GetAll()
         {
-            return _uow.Authors.GetAll().Select(a => AuthorMapper.ToAuthorListDto(a)).ToList();
+            var authors= _uow.Authors.GetAll().Select(a => AuthorMapper.ToAuthorListDto(a)).ToList();
+            return Result<List<AuthorListDto>>.Success(authors);
         }
 
-        public AuthorDetailsDto GetById(int id)
+        public Result<AuthorListDto> GetById(int id)
         {
             var author = _uow.Authors.GetById(id);
-            if (author == null) return null!;
-            return AuthorMapper.ToAuthorDetailsDto(author);
+            if (author == null) return Result<AuthorListDto>.Failure("Author not found.");
+            return Result<AuthorListDto>.Success(AuthorMapper.ToAuthorListDto(author));
+
         }
 
-        public AuthorUpdateDto? GetForUpdate(int id)
+        public Result<AuthorUpdateDto> GetForUpdate(int id)
         {
             var author = _uow.Authors.GetById(id);
-            if (author == null) return null;
-            return AuthorMapper.ToAuthorUpdateDto(author);
-
+            if (author == null) return Result<AuthorUpdateDto>.Failure("Author not found.");
+            return Result<AuthorUpdateDto>.Success(AuthorMapper.ToAuthorUpdateDto(author));
         }
 
         public Result Update(AuthorUpdateDto authorDto)

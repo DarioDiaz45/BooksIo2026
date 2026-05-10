@@ -1,4 +1,5 @@
 ﻿using BooksIo2026.Data;
+using BooksIo2026.Entities;
 using BooksIo2026.IoC;
 using BooksIo2026.Service.DTOs.Author;
 using BooksIo2026.Service.DTOs.Book;
@@ -95,51 +96,46 @@ internal class Program
         Console.Write("Select an ID of the Book to update:");
         var id = int.Parse(Console.ReadLine()!);
 
-        var bookToUpdate = service.GetForUpdate(id);
+        var bookResult = service.GetForUpdate(id);
 
-        if (bookToUpdate != null)
+        if (bookResult.IsFailure)
         {
-            Console.WriteLine($"Book to update: {bookToUpdate.Title}");
+            ShowErrors(bookResult.Errors);
+            return;
+        }
 
-            Console.Write("New Title (ENTER to keep the same): ");
-            var inputTitle = Console.ReadLine();
-            var newTitle = !string.IsNullOrWhiteSpace(inputTitle) ? inputTitle : bookToUpdate.Title;
+        var bookToUpdate = bookResult.Value;
+        Console.WriteLine($"Book to update: {bookToUpdate!.Title}");
+        Console.Write("New Title (ENTER to keep the same): ");
+        var inputTitle = Console.ReadLine();
+        var newTitle = !string.IsNullOrWhiteSpace(inputTitle) ? inputTitle : bookToUpdate.Title;
 
-            Console.Write("Is Active? (y/n): ");
-            bool isActive = Console.ReadLine()!.ToLower() == "y";
+        Console.Write("Is Active? (y/n): ");
+        bool isActive = Console.ReadLine()!.ToLower() == "y";
 
-            Console.Write("Confirm the changes: (y/n): ");
-            var response = Console.ReadLine();
+        Console.Write("Confirm the changes: (y/n): ");
+        var response = Console.ReadLine();
 
-            if (response!.ToLower() == "y")
+        if (response!.ToLower() == "y")
+        {
+            bookToUpdate.Title = newTitle;
+
+            var result = service.Update(bookToUpdate, isActive);
+
+            if (result.IsFailure)
             {
-                bookToUpdate.Title = newTitle;
-
-                var result = service.Update(bookToUpdate, isActive);
-
-                if (result.IsFailure)
-                {
-                    foreach (var error in result.Errors)
-                    {
-                        Console.WriteLine(error);
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("Book updated successfully.");
-                }
+                ShowErrors(result.Errors);
             }
             else
             {
-                Console.WriteLine("Update cancelled.");
+                Console.WriteLine("Book updated successfully.");
             }
         }
         else
         {
-            Console.WriteLine("Book does not exist.");
+            Console.WriteLine("Update cancelled.");
         }
 
-        Console.WriteLine("Press any key to continue...");
         Console.ReadLine();
     }
 
@@ -154,114 +150,123 @@ internal class Program
         Console.Write("Select Id of the Book to delete:");
         var id = int.Parse(Console.ReadLine()!);
 
-        var book = service.GetById(id);
+        var bookResult = service.GetById(id);
 
-        if (book != null)
+        if (bookResult.IsFailure)
         {
-            Console.Write($"Are you sure to delete {book.Title}? (y/n): ");
-            var response = Console.ReadLine();
+            ShowErrors(bookResult.Errors);
+            return;
+        }
 
-            if (response!.ToLower() == "y")
+        var book = bookResult.Value;
+
+        Console.Write($"Are you sure to delete {book!.Title}? (y/n): ");
+        var response = Console.ReadLine();
+
+        if (response!.ToLower() == "y")
+        {
+            var result = service.Delete(id);
+
+            if (result.IsFailure)
             {
-                var result = service.Delete(id);
-
-                if (result.IsFailure)
-                {
-                    foreach (var error in result.Errors)
-                    {
-                        Console.WriteLine(error);
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("Book deleted successfully.");
-                }
+                ShowErrors(result.Errors);
             }
             else
             {
-                Console.WriteLine("Deletion cancelled.");
+                Console.WriteLine("Book deleted successfully.");
             }
         }
         else
         {
-            Console.WriteLine("Book not found.");
+            Console.WriteLine("Deletion cancelled.");
         }
 
-        Console.WriteLine("Press any key to continue.");
         Console.ReadLine();
     }
 
     private static void AddBook(IBookService bookService, IAuthorService authorService, IPublisherService publisherService)
     {
         Console.Clear();
-        Console.WriteLine("Add a New Book");
+        Console.WriteLine("--- Add New Book ---");
 
-
-        Console.WriteLine("Authors:");
-        var authors = authorService.GetAll();
-        foreach (var a in authors)
-        {
-            Console.WriteLine($"Id: {a.AuthorId,4} Name: {a.FullName}");
-        }
-
-
-        Console.WriteLine("\nPublishers:");
-        var publishers = publisherService.GetAll();
-        foreach (var p in publishers)
-        {
-            Console.WriteLine($"Id: {p.PublisherId,4} Name: {p.Name}");
-        }
-
-        Console.WriteLine("-----------------------------");
+        var dto = new BookCreateDto();
 
         Console.Write("Title: ");
-        var title = Console.ReadLine();
+        dto.Title = Console.ReadLine() ?? "";
 
-        Console.Write("Author Id: ");
-        var authorId = int.Parse(Console.ReadLine()!);
 
-        Console.Write("Publisher Id: ");
-        var publisherId = int.Parse(Console.ReadLine()!);
+        Console.WriteLine("\nAvailable Authors:");
+        ShowAuthors(authorService);
+
+        Console.Write("Select Author ID: ");
+        if (!int.TryParse(Console.ReadLine(), out int authorId))
+        {
+            Console.WriteLine("Invalid Author ID");
+            Console.ReadLine();
+            return;
+        }
+        dto.AuthorId = authorId;
+
+
+        Console.WriteLine("\nAvailable Publishers:");
+        ShowPublishers(publisherService);
+
+        Console.Write("Select Publisher ID: ");
+        if (!int.TryParse(Console.ReadLine(), out int publisherId))
+        {
+            Console.WriteLine("Invalid Publisher ID");
+            Console.ReadLine();
+            return;
+        }
+        dto.PublisherId = publisherId;
 
         Console.Write("Published Date (yyyy-mm-dd): ");
-        var publishedDate = DateTime.Parse(Console.ReadLine()!);
+        if (DateTime.TryParse(Console.ReadLine(), out DateTime date))
+        {
+            dto.PublishedDate = date;
+        }
 
         Console.Write("Price: ");
-        var price = decimal.Parse(Console.ReadLine()!);
-
-
-
-        var dto = new BookCreateDto
+        if (decimal.TryParse(Console.ReadLine(), out decimal price))
         {
-            Title = title!,
-            AuthorId = authorId,
-            PublisherId = publisherId,
-            PublishedDate = publishedDate,
-            Price = price
-        };
+            dto.Price = price;
+        }
+
 
         var result = bookService.Add(dto);
 
-        Console.WriteLine(result.IsSuccess ? "Book added successfully." : "Error...");
-        Console.ReadKey();
-    }
+        if (result.IsFailure)
+        {
+            ShowErrors(result.Errors);
+        }
+        else
+        {
+            Console.WriteLine("Book added successfully!!!");
+        }
 
+        Console.ReadLine();
+    }
     private static void ListBooks(IBookService service)
     {
         Console.Clear();
         Console.WriteLine("List of Books");
-
         ShowBooks(service);
-
-        Console.WriteLine("Press any key to continue...");
+        Console.WriteLine("Press any key to continue");
         Console.ReadLine();
     }
 
+
+
     private static void ShowBooks(IBookService service)
     {
-        var books = service.GetAll();
+        var booksResult = service.GetAll();
+        if (booksResult.IsFailure)
+        {
+            ShowErrors(booksResult.Errors);
 
-        foreach (var b in books)
+        }
+        var books = booksResult.Value;
+        foreach (var b in books!)
         {
             Console.WriteLine($"Id: {b.BookId,4} Title: {b.Title,-25} Author: {b.AuthorName,-25} Publisher: {b.PublisherName,-25}");
         }
@@ -310,11 +315,16 @@ internal class Program
     }
     private static void ShowPublishers(IPublisherService service)
     {
-        var publishers = service.GetAll();
-
-        foreach (var p in publishers)
+        var publishersResult = service.GetAll();
+        if (publishersResult.IsFailure)
         {
-            Console.WriteLine($"Id: {p.PublisherId,4} Name: {p.Name,-25} Country: {p.Country}");
+            ShowErrors(publishersResult.Errors);
+            return;
+        }
+        var publishers = publishersResult.Value;
+        foreach (var publisher in publishers!)
+        {
+            Console.WriteLine($"Id: {publisher.PublisherId,4} Name: {publisher.Name,-25} Country: {publisher.Country,-25}");
         }
     }
 
@@ -328,56 +338,52 @@ internal class Program
         Console.Write("Select an ID of the Publisher to update:");
         var id = int.Parse(Console.ReadLine()!);
 
-        var publisherToUpdate = service.GetForUpdate(id);
-
-        if (publisherToUpdate != null)
+        var publisherResult = service.GetForUpdate(id);
+        if (publisherResult.IsFailure)
         {
-            Console.WriteLine($"Publisher to update: {publisherToUpdate.Name}");
+            ShowErrors(publisherResult.Errors);
+            return;
+        }
 
-            Console.Write("New Name (ENTER to keep the same): ");
-            var inputName = Console.ReadLine();
-            var newName = !string.IsNullOrWhiteSpace(inputName) ? inputName : publisherToUpdate.Name;
+        var publisherToUpdate = publisherResult.Value;
 
-            Console.Write("New Country (ENTER to keep the same): ");
-            var inputCountry = Console.ReadLine();
-            var newCountry = !string.IsNullOrWhiteSpace(inputCountry) ? inputCountry : publisherToUpdate.Country;
+        Console.WriteLine($"Publisher to update: {publisherToUpdate!.Name}");
 
-            Console.Write("Is Active? (y/n): ");
-            bool isActive = Console.ReadLine()!.ToLower() == "y";
+        Console.Write("New Name (ENTER to keep the same): ");
+        var inputName = Console.ReadLine();
+        var newName = !string.IsNullOrWhiteSpace(inputName) ? inputName : publisherToUpdate.Name;
 
-            Console.Write("Confirm the changes: (y/n): ");
-            var response = Console.ReadLine();
+        Console.Write("New Country (ENTER to keep the same): ");
+        var inputCountry = Console.ReadLine();
+        var newCountry = !string.IsNullOrWhiteSpace(inputCountry) ? inputCountry : publisherToUpdate.Country;
 
-            if (response!.ToLower() == "y")
+        Console.Write("Is Active? (y/n): ");
+        bool isActive = Console.ReadLine()!.ToLower() == "y";
+
+        Console.Write("Confirm the changes: (y/n): ");
+        var response = Console.ReadLine();
+
+        if (response!.ToLower() == "y")
+        {
+            publisherToUpdate.Name = newName;
+            publisherToUpdate.Country = newCountry;
+
+            var result = service.Update(publisherToUpdate, isActive);
+
+            if (result.IsFailure)
             {
-                publisherToUpdate.Name = newName;
-                publisherToUpdate.Country = newCountry;
-
-                var result = service.Update(publisherToUpdate, isActive);
-
-                if (result.IsFailure)
-                {
-                    foreach (var error in result.Errors)
-                    {
-                        Console.WriteLine(error);
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("Publisher updated successfully.");
-                }
+                ShowErrors(result.Errors);
             }
             else
             {
-                Console.WriteLine("Update cancelled.");
+                Console.WriteLine("Publisher updated successfully.");
             }
         }
         else
         {
-            Console.WriteLine("Publisher does not exist.");
+            Console.WriteLine("Update cancelled.");
         }
 
-        Console.WriteLine("Press any key to continue...");
         Console.ReadLine();
     }
 
@@ -392,40 +398,40 @@ internal class Program
         Console.Write("Select Id of the Publisher to delete:");
         var id = int.Parse(Console.ReadLine()!);
 
-        var publisher = service.GetById(id);
-
-        if (publisher != null)
+        var publisherResult = service.GetById(id);
+        if (publisherResult.IsFailure)
         {
-            Console.Write($"Are you sure to delete {publisher.Name}? (y/n): ");
-            var response = Console.ReadLine();
+            ShowErrors(publisherResult.Errors);
+            return;
+        }
 
-            if (response!.ToLower() == "y")
+        var publisher = publisherResult.Value;
+
+        Console.Write($"Are you sure to delete {publisher!.Name}? (y/n): ");
+        var response = Console.ReadLine();
+
+        if (response!.ToLower() == "y")
+        {
+            var result = service.Delete(id);
+
+            if (result.IsFailure)
             {
-                var result = service.Delete(id);
-
-                if (result.IsFailure)
+                foreach (var error in result.Errors)
                 {
-                    foreach (var error in result.Errors)
-                    {
-                        Console.WriteLine(error);
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("Publisher deleted successfully.");
+                    Console.WriteLine(error);
                 }
             }
             else
             {
-                Console.WriteLine("Deletion cancelled.");
+                Console.WriteLine("Publisher deleted successfully.");
             }
         }
         else
         {
-            Console.WriteLine("Publisher not found.");
+            Console.WriteLine("Deletion cancelled.");
         }
 
-        Console.WriteLine("Press any key to continue.");
+
         Console.ReadLine();
     }
 
@@ -453,17 +459,13 @@ internal class Program
         var result = service.Add(dto, true);
         if (result.IsFailure)
         {
-            foreach (var error in result.Errors)
-            {
-                Console.WriteLine(error);
-            }
+            ShowErrors(result.Errors);
         }
         else
         {
             Console.WriteLine("Publisher added succesfully!!!");
 
         }
-        Console.WriteLine("Press any key to continue");
         Console.ReadKey();
     }
 
@@ -533,52 +535,60 @@ internal class Program
         {
             Console.Write("Select an ID of the Author to update:");
             var authorId = int.Parse(Console.ReadLine()!);
-            var authorToUpdate = service.GetForUpdate(authorId);
-            if (authorToUpdate != null)
+            var authorResult = service.GetForUpdate(authorId);
+            if (authorResult.IsFailure)
             {
-                Console.WriteLine($"Author to update: {authorToUpdate.FirstName} {authorToUpdate.LastName}");
-                Console.Write("New First Name: (ENTER to keep the same)");
-                var inputFirstName = Console.ReadLine();
-                var newFirstName = !string.IsNullOrWhiteSpace(inputFirstName) ? inputFirstName : authorToUpdate!.FirstName;
+                ShowErrors(authorResult.Errors);
+                return;
+            }
+            var authorToUpdate = authorResult.Value;
+            Console.WriteLine($"Author to update: {authorToUpdate!.FirstName} {authorToUpdate.LastName}");
+            Console.Write("New First Name: (ENTER to keep the same)");
+            var inputFirstName = Console.ReadLine();
+            var newFirstName = !string.IsNullOrWhiteSpace(inputFirstName) ? inputFirstName : authorToUpdate!.FirstName;
 
-                Console.Write("New Last Name: (ENTER to keep the same)");
-                var inputLastName = Console.ReadLine();
-                var newLastName = !string.IsNullOrWhiteSpace(inputLastName) ? inputLastName : authorToUpdate!.LastName;
-                Console.Write("Confirm the changes: (y/n)");
-                var response = Console.ReadLine();
-                if (response!.ToLower() == "y")
+            Console.Write("New Last Name: (ENTER to keep the same)");
+            var inputLastName = Console.ReadLine();
+            var newLastName = !string.IsNullOrWhiteSpace(inputLastName) ? inputLastName : authorToUpdate!.LastName;
+            Console.Write("Confirm the changes: (y/n)");
+            var response = Console.ReadLine();
+            if (response!.ToLower() == "y")
+            {
+
+                authorToUpdate!.FirstName = newFirstName;
+                authorToUpdate.LastName = newLastName;
+                var result = service.Update(authorToUpdate);
+                if (result.IsFailure)
                 {
-
-                    authorToUpdate!.FirstName = newFirstName;
-                    authorToUpdate.LastName = newLastName;
-                    var result = service.Update(authorToUpdate);
-                    if (result.IsFailure)
+                    foreach (var error in result.Errors)
                     {
-                        foreach (var error in result.Errors)
-                        {
-                            Console.WriteLine(error);
-                        }
+                        Console.WriteLine(error);
                     }
-                    else
-                    {
-                        Console.WriteLine("Author updated successfully.");
-                    }
-
-
                 }
                 else
                 {
-                    Console.WriteLine("Update cancelled.");
+                    Console.WriteLine("Author updated successfully.");
                 }
+
+
             }
             else
             {
-                Console.WriteLine("Author does not exist.");
-
+                Console.WriteLine("Update cancelled.");
             }
-            Console.WriteLine("Key to continue...");
+
             Console.ReadLine();
         }
+    }
+
+    private static void ShowErrors(List<string> errors)
+    {
+        foreach (var error in errors)
+        {
+            Console.WriteLine(error);
+        }
+        Console.WriteLine("Press any key to continue...");
+
     }
 
     private static void DeleteAuthor(IAuthorService service)
@@ -590,39 +600,35 @@ internal class Program
 
         Console.Write("Select Id of the Author to delete:");
         var authorId = int.Parse(Console.ReadLine()!);
-        var authorToDelete = service.GetById(authorId);
-        if (authorToDelete != null)
+        var authorResult = service.GetById(authorId);
+        if (authorResult.IsFailure)
         {
-            Console.Write($"Are you sure to delete {authorToDelete.FirstName} {authorToDelete.LastName}? (y/n): ");
-            var response = Console.ReadLine();
-            if (response!.ToLower() == "y")
+            ShowErrors(authorResult.Errors);
+            return;
+        }
+        var authorToDelete = authorResult.Value;
+
+        Console.Write($"Are you sure to delete {authorToDelete!.FullName}? (y/n): ");
+        var response = Console.ReadLine();
+        if (response!.ToLower() == "y")
+        {
+            var result = service.Delete(authorToDelete.AuthorId);
+            if (result.IsFailure)
             {
-                var result = service.Delete(authorToDelete.AuthorId);
-                if (result.IsFailure)
-                {
-                    foreach (var error in result.Errors)
-                    {
-                        Console.WriteLine(error);
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("Author deleted successfully.");
-                }
-
-
+                ShowErrors(result.Errors);
             }
             else
             {
-                Console.WriteLine("Deletion cancelled.");
+                Console.WriteLine("Author deleted successfully.");
             }
+
+
         }
         else
         {
-            Console.WriteLine("Author not found.");
-
+            Console.WriteLine("Deletion cancelled.");
         }
-        Console.WriteLine("Key to continue.");
+
         Console.ReadLine();
 
 
@@ -645,19 +651,13 @@ internal class Program
         var result = service.Add(authorDto);
         if (result.IsFailure)
         {
-            foreach (var error in result.Errors)
-            {
-                Console.WriteLine(error);
-            }
+            ShowErrors(result.Errors);
         }
         else
         {
             Console.WriteLine("Author added successfully.");
         }
 
-
-
-        Console.WriteLine("Press any key to continue...");
         Console.ReadKey();
 
 
@@ -668,14 +668,19 @@ internal class Program
         Console.Clear();
         Console.WriteLine("List of Authors");
         ShowAuthors(service);
-        Console.WriteLine("Press any key to continue...");
         Console.ReadLine();
     }
 
     private static void ShowAuthors(IAuthorService service)
     {
-        var authors = service.GetAll();
-        foreach (var author in authors)
+        var authorsResult = service.GetAll();
+        if (authorsResult.IsFailure)
+        {
+            ShowErrors(authorsResult.Errors);
+            return;
+        }
+        var authors = authorsResult.Value;
+        foreach (var author in authors!)
         {
             Console.WriteLine($"Id: {author.AuthorId,4} Author:{author.FullName,-30}");
         }

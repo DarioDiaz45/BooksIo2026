@@ -68,27 +68,30 @@ namespace BooksIo2026.Service.Services
         }
 
 
-        public List<PublisherListDto> GetAll()
+        public Result<List<PublisherListDto>> GetAll()
         {
-            return _uow.Publishers.GetAll()
+            var publishers = _uow.Publishers.GetAll()
                  .Select(p => PublisherMapper.ToPublisherListDto(p))
                  .ToList();
+            return Result<List<PublisherListDto>>.Success(publishers);
+
+
         }
 
-        public PublisherDetailsDto GetById(int id)
+        public Result<PublisherListDto> GetById(int id)
         {
             var publisher = _uow.Publishers.GetById(id);
-            if (publisher == null) return null!;
+            if (publisher == null) return Result<PublisherListDto>.Failure("Publisher not found.");
 
-            return PublisherMapper.ToPublisherDetailsDto(publisher);
+            return Result<PublisherListDto>.Success(PublisherMapper.ToPublisherListDto(publisher));
         }
 
-        public PublisherUpdateDto? GetForUpdate(int id)
+        public Result<PublisherUpdateDto> GetForUpdate(int id)
         {
             var publisher = _uow.Publishers.GetById(id);
-            if (publisher == null) return null;
+            if (publisher == null) return Result<PublisherUpdateDto>.Failure("Publisher not found.");
 
-            return PublisherMapper.ToPublisherUpdateDto(publisher);
+            return Result<PublisherUpdateDto>.Success(PublisherMapper.ToPublisherUpdateDto(publisher));
         }
 
         public Result Update(PublisherUpdateDto dto, bool isActive)
