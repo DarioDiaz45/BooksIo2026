@@ -73,6 +73,43 @@ namespace BooksIo2026.Service.Services
             return Result<List<BookListDto>>.Success(books);
         }
 
+        public Result<List<BookListDto>> GetBooksByPublisher(int id)
+        {
+            var query = _uow.Books.Query()
+                .Where(b => b.PublisherId == id)
+                .Select(b => new BookListDto
+                {
+                    BookId = b.BookId,
+                    Title = b.Title,
+                    AuthorName = $"{b.Author.FirstName} {b.Author.LastName}",
+                    Price = b.Price
+                }) .ToList();
+            if(query == null || !query.Any())
+            {
+                return Result<List<BookListDto>>.Failure("No books found for the specified publisher.");
+            }
+            return Result<List<BookListDto>>.Success(query);
+        }
+
+        public Result<List<BooksGroupedByPublisherDto>> GetBooksGroupedByPublisher()
+        {
+           var query= _uow.Books.Query()
+                .GroupBy(b => new { b.PublisherId, b.Publisher.Name })
+                .Select(g => new BooksGroupedByPublisherDto
+                {
+                    PublisherId = g.Key.PublisherId,
+                    PublisherName = g.Key.Name,
+                    TotalCount = g.Count(),
+                    AveragePrice = g.Average(b => b.Price)
+                })
+                .ToList();
+            if(query == null || !query.Any())
+            {
+                return Result<List<BooksGroupedByPublisherDto>>.Failure("No books found.");
+            }
+            return Result<List<BooksGroupedByPublisherDto>>.Success(query);
+        }
+
         public Result<BookListDto> GetById(int id)
         {
             var book = _uow.Books.GetById(id);

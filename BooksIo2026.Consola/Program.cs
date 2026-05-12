@@ -80,12 +80,113 @@ internal class Program
                     case "5":
                         ShowBookDetails(bookService);
                         break;
+                    case "6":
+                        ShowBooksGroupedByPublisher(bookService);
+                        break;
                     case "0":
                         return;
                 }
 
             } while (true);
         }
+    }
+
+    private static void ShowPublisherBooksDetail(IBookService bookService, int publisherId, string publisherName)
+    {
+        Console.Clear();
+        Console.WriteLine($"BOOK DETAILS - {publisherName.ToUpper()}");
+        Console.WriteLine(new string('-', 100));
+
+        var resultT = bookService.GetBooksByPublisher(publisherId);
+
+        if (!resultT.IsSuccess || resultT.Value == null || !resultT.Value.Any())
+        {
+            Console.WriteLine("No books found for this publisher.");
+            Console.ReadKey();
+            return;
+        }
+
+        var books = resultT.Value;
+
+        Console.WriteLine(
+            $"{"Title",-40}" +
+            $"{"Author",-25}" +
+            $"{"Price",15}" +
+            $"{"Stock",10}");
+
+        Console.WriteLine(new string('-', 100));
+
+        foreach (var book in books)
+        {
+            Console.WriteLine(
+                $"{book.Title,-40}" +
+                $"{book.AuthorName,-25}" +
+                $"{book.Price,15}" );
+        }
+
+        Console.WriteLine(new string('-', 100));
+        Console.ReadKey();
+    }
+
+    private static void ShowBooksGroupedByPublisher(IBookService service)
+    {
+        Console.Clear();
+        Console.WriteLine("BOOKS GROUPED BY PUBLISHER");
+        Console.WriteLine(new string('-', 90));
+
+        var resultT = service.GetBooksGroupedByPublisher();
+
+        if (!resultT.IsSuccess || resultT.Value == null || !resultT.Value.Any())
+        {
+            Console.WriteLine("No records found.");
+            Console.ReadKey();
+            return;
+        }
+
+        var groupedBooks = resultT.Value.ToList();
+
+        Console.WriteLine(
+            $"{"#",-5}" +
+            $"{"Publisher",-25}" +
+            $"{"Books",10}" +
+            $"{"Average Price",10}");
+
+        Console.WriteLine(new string('-', 90));
+
+        for (int i = 0; i < groupedBooks.Count; i++)
+        {
+            var item = groupedBooks[i];
+
+            Console.WriteLine(
+                $"{i + 1,-5}" +
+                $"{item.PublisherName,-25}" +
+                $"{item.TotalCount,10}" +
+                $"{item.AveragePrice,10}");
+        }
+
+        Console.WriteLine(new string('-', 90));
+        Console.WriteLine();
+        Console.Write("Would you like to view details for a publisher? (Y/N): ");
+
+        var answer = Console.ReadLine()?.Trim().ToUpper();
+
+        if (answer != "Y")
+            return;
+
+        Console.Write("Enter publisher number: ");
+
+        if (!int.TryParse(Console.ReadLine(), out int option) ||
+            option < 1 || option > groupedBooks.Count)
+        {
+            Console.WriteLine("Invalid option.");
+            Console.ReadKey();
+            return;
+        }
+
+        var selectedPublisherId = groupedBooks[option - 1].PublisherId;
+        var selectedPublisherName = groupedBooks[option - 1].PublisherName;
+
+        ShowPublisherBooksDetail(service, selectedPublisherId, selectedPublisherName);
     }
 
     private static void ShowBookDetails(IBookService bookService)
@@ -118,7 +219,7 @@ internal class Program
 
     }
 
-    private static void UpdateBook(IBookService service ,IAuthorService authorService, IPublisherService publisherService)
+    private static void UpdateBook(IBookService service, IAuthorService authorService, IPublisherService publisherService)
     {
         Console.Clear();
         Console.WriteLine("Update a Book");

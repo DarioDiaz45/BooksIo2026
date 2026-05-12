@@ -6,6 +6,7 @@ namespace BooksIo2026.Data.Interfaces
     {
         List<Book> GetAll();
         Book? GetById(int id);
+        IQueryable<Book>Query();
         void Add(Book book);
         void Delete(int id);
         bool ExistSameName(string title, int bookId);
