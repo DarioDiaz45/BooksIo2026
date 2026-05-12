@@ -46,7 +46,7 @@ internal class Program
     {
         using (var scoped = provider.CreateScope())
         {
-            var service = scoped.ServiceProvider.GetRequiredService<IBookService>();
+            var bookService = scoped.ServiceProvider.GetRequiredService<IBookService>();
             var authorService = scoped.ServiceProvider.GetRequiredService<IAuthorService>();
             var publisherService = scoped.ServiceProvider.GetRequiredService<IPublisherService>();
 
@@ -58,6 +58,7 @@ internal class Program
                 Console.WriteLine("2. Add a Book");
                 Console.WriteLine("3. Delete a Book");
                 Console.WriteLine("4. Update a Book");
+                Console.WriteLine("5. View Book Details");
                 Console.WriteLine("0. Back to Main Menu");
 
                 var op = Console.ReadLine();
@@ -65,16 +66,19 @@ internal class Program
                 switch (op)
                 {
                     case "1":
-                        ListBooks(service);
+                        ListBooks(bookService);
                         break;
                     case "2":
-                        AddBook(service, authorService, publisherService);
+                        AddBook(bookService, authorService, publisherService);
                         break;
                     case "3":
-                        DeleteBook(service);
+                        DeleteBook(bookService);
                         break;
                     case "4":
-                        UpdateBook(service);
+                        UpdateBook(bookService, authorService, publisherService);
+                        break;
+                    case "5":
+                        ShowBookDetails(bookService);
                         break;
                     case "0":
                         return;
@@ -84,7 +88,37 @@ internal class Program
         }
     }
 
-    private static void UpdateBook(IBookService service)
+    private static void ShowBookDetails(IBookService bookService)
+    {
+        Console.Clear();
+        Console.WriteLine("Book Details");
+        ShowBooks(bookService);
+        Console.Write("Select Book ID to view details: ");
+        if (!int.TryParse(Console.ReadLine(), out int bookId))
+        {
+            Console.WriteLine("Invalid Book ID");
+            Console.ReadLine();
+            return;
+        }
+        var resultT = bookService.GetDetails(bookId);
+        if (resultT.IsFailure)
+        {
+            ShowErrors(resultT.Errors);
+            return;
+        }
+        var book = resultT.Value;
+        Console.WriteLine($"ID: {book!.BookId}");
+        Console.WriteLine($"Title: {book.Title}");
+        Console.WriteLine($"Author: {book.AuthorName}");
+        Console.WriteLine($"Publisher: {book.PublisherName}");
+        Console.WriteLine($"Published Date: {book.PublishedDate.ToShortDateString()}");
+        Console.WriteLine($"Price: {book.Price}");
+        Console.WriteLine("Press any key to continue");
+        Console.ReadLine();
+
+    }
+
+    private static void UpdateBook(IBookService service ,IAuthorService authorService, IPublisherService publisherService)
     {
         Console.Clear();
         Console.WriteLine("Update a Book");
@@ -287,6 +321,7 @@ internal class Program
                 Console.WriteLine("2. Add Publisher");
                 Console.WriteLine("3. Delete an Publisher");
                 Console.WriteLine("4. Update an Publisher");
+                Console.WriteLine("5. View Publisher Details");
                 Console.WriteLine("0. Back");
                 Console.Write("Select an option:");
 
@@ -306,6 +341,9 @@ internal class Program
                     case "4":
                         UpdatePublisher(service);
                         break;
+                    case "5":
+                        ShowDetailsPublisher(service);
+                        break;
                     case "0":
                         return;
                 }
@@ -313,6 +351,96 @@ internal class Program
             } while (true);
         }
     }
+
+    private static void ShowDetailsPublisher(IPublisherService service)
+    {
+        Console.Clear();
+        Console.WriteLine("=== Publisher Details ===\n");
+
+        var publishersResult = service.GetAll();
+
+        if (publishersResult.IsFailure)
+        {
+            foreach (var error in publishersResult.Errors)
+            {
+                Console.WriteLine(error);
+            }
+            Console.WriteLine("\nPress any key to continue...");
+            Console.ReadKey();
+            return;
+        }
+
+        foreach (var publisher in publishersResult.Value!)
+        {
+            Console.WriteLine($"{publisher.PublisherId} - {publisher.Name}");
+        }
+
+        Console.WriteLine();
+
+        int publisherId;
+        while (true)
+        {
+            Console.Write("Select a Publisher ID (0 to quit): ");
+            var input = Console.ReadLine();
+
+            if (!int.TryParse(input, out publisherId))
+            {
+                Console.WriteLine("You must enter a number.");
+                continue;
+            }
+            if (publisherId == 0) return;
+            var exists = publishersResult.Value!.Any(p => p.PublisherId == publisherId);
+
+            if (!exists)
+            {
+                Console.WriteLine("The ID does not correspond to a listed publisher.");
+                continue;
+            }
+
+            break;
+        }
+
+        var result = service.GetPublisherDetails(publisherId);
+
+        Console.Clear();
+        Console.WriteLine("=== Publisher Details ===\n");
+
+        if (result.IsFailure)
+        {
+            ShowErrors(result.Errors);
+            Console.ReadLine();
+        }
+        else
+        {
+            var publisher = result.Value!;
+
+            Console.WriteLine($"Id: {publisher.PublisherId}");
+            Console.WriteLine($"Name: {publisher.Name}");
+            Console.WriteLine($"Country: {publisher.Country}");
+            Console.WriteLine($"Founded Date: {publisher.FoundedDate:dd/MM/yyyy}");
+            Console.WriteLine($"Email: {publisher.Email ?? "Not provided"}");
+            Console.WriteLine();
+
+            Console.WriteLine("--- BOOKS ---");
+
+            if (!publisher.Books.Any())
+            {
+                Console.WriteLine("No associated books.");
+            }
+            else
+            {
+                foreach (var book in publisher.Books)
+                {
+                    Console.WriteLine($"{book.BookId} - {book.Title}");
+                }
+            }
+
+
+        }
+        Console.WriteLine("\nPress any key to continue...");
+        Console.ReadKey();
+    }
+
     private static void ShowPublishers(IPublisherService service)
     {
         var publishersResult = service.GetAll();
@@ -493,6 +621,7 @@ internal class Program
                 Console.WriteLine("2. Add an Author");
                 Console.WriteLine("3. Delete an Author");
                 Console.WriteLine("4. Update an Author");
+                Console.WriteLine("5. View Author Details");
 
                 Console.WriteLine("0. Back to Main Menu");
                 Console.Write("Select an option:");
@@ -511,6 +640,9 @@ internal class Program
                     case "4":
                         UpdateAuthor(service);
                         break;
+                    case "5":
+                        ShowDetailsAuthors(service);
+                        break;
                     case "0":
                         Console.WriteLine("Exiting...");
                         return;
@@ -524,6 +656,91 @@ internal class Program
 
 
 
+    }
+
+    private static void ShowDetailsAuthors(IAuthorService service)
+    {
+        Console.Clear();
+        Console.WriteLine("=== Author's Details ===\n");
+
+        var authorsResult = service.GetAll();
+
+        if (authorsResult.IsFailure)
+        {
+            ShowErrors(authorsResult.Errors);
+        }
+
+        foreach (var author in authorsResult.Value!)
+        {
+            Console.WriteLine($"{author.AuthorId,2} - {author.FullName}");
+        }
+
+        Console.WriteLine();
+
+        int authorId;
+        while (true)
+        {
+            Console.Write("Select An Author ID to view details (0 to quit): ");
+            var input = Console.ReadLine();
+
+            if (!int.TryParse(input, out authorId))
+            {
+                Console.WriteLine("You must enter a number.");
+                continue;
+            }
+            if (authorId == 0) return;
+            var exists = authorsResult.Value!.Any(a => a.AuthorId == authorId);
+
+            if (!exists)
+            {
+                Console.WriteLine("The ID does not correspond to a listed author.");
+                continue;
+            }
+
+            break;
+        }
+
+        var result = service.GetAuthorDetails(authorId);
+
+        Console.Clear();
+        Console.WriteLine("=== Author Details ===\n");
+
+        if (result.IsFailure)
+        {
+            foreach (var error in result.Errors)
+            {
+                Console.WriteLine(error);
+            }
+            Console.WriteLine("\nPress any key to continue...");
+            Console.ReadKey();
+            return;
+
+        }
+        else
+        {
+            var author = result.Value!;
+
+            Console.WriteLine($"Id: {author.AuthorId}");
+            Console.WriteLine($"FullName: {author.FirstName} {author.LastName}");
+            Console.WriteLine();
+
+            Console.WriteLine("--- Books ---");
+
+            if (!author.Books.Any())
+            {
+                Console.WriteLine("No associated books.");
+            }
+            else
+            {
+                foreach (var book in author.Books)
+                {
+                    Console.WriteLine($"{book.BookId} - {book.Title}");
+                }
+            }
+        }
+
+        Console.WriteLine("\nPress any key to continue...");
+        Console.ReadKey();
     }
 
     private static void UpdateAuthor(IAuthorService service)

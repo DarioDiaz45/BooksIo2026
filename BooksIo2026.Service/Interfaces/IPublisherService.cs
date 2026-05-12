@@ -9,6 +9,7 @@ namespace BooksIo2026.Service.Interfaces
         Result<List<PublisherListDto>> GetAll();
         Result<PublisherListDto> GetById(int id);
         Result<PublisherUpdateDto> GetForUpdate(int id);
+        Result<PublisherDetailsDto> GetPublisherDetails(int id);
         Result Add(PublisherCreateDto dto, bool isActive);
         Result Update(PublisherUpdateDto dto, bool isActive);
         Result Delete(int id);

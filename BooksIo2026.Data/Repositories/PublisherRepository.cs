@@ -2,6 +2,7 @@
 
 using BooksIo2026.Data.Interfaces;
 using BooksIo2026.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace BooksIo2026.Data.Repositories
 {
@@ -47,6 +48,11 @@ namespace BooksIo2026.Data.Repositories
         public bool HasBooks(int id)
         {
             return _context.Books.Any(b => b.PublisherId == id);
+        }
+
+        public IQueryable<Publisher> Query()
+        {
+            return _context.Publishers.AsNoTracking().AsQueryable();
         }
 
         public void Update(Publisher publisher)

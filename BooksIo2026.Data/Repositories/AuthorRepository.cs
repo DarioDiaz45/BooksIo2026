@@ -49,6 +49,11 @@ namespace BooksIo2026.Data.Repositories
             return _context.Books.Any(b => b.AuthorId == id);
         }
 
+        public IQueryable<Author> Query()
+        {
+            return _context.Authors.AsNoTracking().AsQueryable();
+        }
+
         public void Update(Author author)
         {
 

@@ -6,6 +6,7 @@ namespace BooksIo2026.Data.Interfaces
     {
         List<Publisher> GetAll();
         Publisher? GetById(int id);
+        IQueryable<Publisher> Query();
         void Add(Publisher publisher);
         void Delete(int id);
         void Update(Publisher publisher);

@@ -1,6 +1,7 @@
 ﻿using BooksIo2026.Data;
 using BooksIo2026.Entities;
 using BooksIo2026.Service.Common;
+using BooksIo2026.Service.DTOs.Book;
 using BooksIo2026.Service.DTOs.Publisher;
 using BooksIo2026.Service.Interfaces;
 using BooksIo2026.Service.Mappers;
@@ -92,6 +93,33 @@ namespace BooksIo2026.Service.Services
             if (publisher == null) return Result<PublisherUpdateDto>.Failure("Publisher not found.");
 
             return Result<PublisherUpdateDto>.Success(PublisherMapper.ToPublisherUpdateDto(publisher));
+        }
+
+        public Result<PublisherDetailsDto> GetPublisherDetails(int id)
+        {
+            var query = _uow.Publishers.Query()
+                .Where(p => p.PublisherId == id)
+                .Select(p => new PublisherDetailsDto
+                {
+                    PublisherId = p.PublisherId,
+                    Name = p.Name,
+                    Country = p.Country,
+                    FoundedDate = p.FoundedDate,
+                    Email = p.Email==null?"Email not available":p.Email,
+                    Books = p.Books.Select(b => new BookListDto
+                    {
+                        BookId = b.BookId,
+                        Title = b.Title,
+                        AuthorName= $"{b.Author.FirstName} {b.Author.LastName}",
+                        Price= b.Price
+                    }).ToList()
+                })
+                .FirstOrDefault();
+            if(query == null)
+            {
+                return Result<PublisherDetailsDto>.Failure("Publisher not found.");
+            }
+            return Result<PublisherDetailsDto>.Success(query);
         }
 
         public Result Update(PublisherUpdateDto dto, bool isActive)

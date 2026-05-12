@@ -1,9 +1,12 @@
-﻿namespace BooksIo2026.Service.DTOs.Author
+﻿using BooksIo2026.Service.DTOs.Book;
+
+namespace BooksIo2026.Service.DTOs.Author
 {
     public class AuthorDetailsDto
     {
         public int AuthorId { get; set; }
         public string FirstName { get; set; } = null!;
         public string LastName { get; set; } = null!;
+        public List<BookListDto> Books { get; set; } = new List<BookListDto>();
     }
 }

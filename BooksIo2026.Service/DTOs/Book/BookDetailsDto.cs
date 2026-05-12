@@ -1,4 +1,6 @@
-﻿namespace BooksIo2026.Service.DTOs.Book
+﻿using System.Runtime;
+
+namespace BooksIo2026.Service.DTOs.Book
 {
     public class BookDetailsDto
     {
@@ -8,6 +10,7 @@
         public string PublisherName { get; set; } = null!;
         public DateTime PublishedDate { get; set; }
         public decimal Price { get; set; }
+        public bool IsActive { get; set; }
 
     }
 }

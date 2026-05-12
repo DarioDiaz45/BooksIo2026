@@ -1,7 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
-
-namespace BooksIo2026.Entities
+﻿namespace BooksIo2026.Entities
 {
 
     public class Author
@@ -13,7 +10,7 @@ namespace BooksIo2026.Entities
 
         public string LastName { get; set; } = null!;
 
-        ICollection<Book> Books { get; set; } = null!;
+        public ICollection<Book> Books { get; set; } = null!;
         override public string ToString()
         {
             return $"{FirstName} {LastName}";

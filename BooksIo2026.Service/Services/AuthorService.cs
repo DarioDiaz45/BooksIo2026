@@ -2,6 +2,7 @@
 using BooksIo2026.Entities;
 using BooksIo2026.Service.Common;
 using BooksIo2026.Service.DTOs.Author;
+using BooksIo2026.Service.DTOs.Book;
 using BooksIo2026.Service.Interfaces;
 using BooksIo2026.Service.Mappers;
 using FluentValidation;
@@ -74,8 +75,36 @@ namespace BooksIo2026.Service.Services
 
         public Result<List<AuthorListDto>> GetAll()
         {
-            var authors= _uow.Authors.GetAll().Select(a => AuthorMapper.ToAuthorListDto(a)).ToList();
+            var authors = _uow.Authors.GetAll().Select(a => AuthorMapper.ToAuthorListDto(a)).ToList();
             return Result<List<AuthorListDto>>.Success(authors);
+        }
+
+        public Result<AuthorDetailsDto> GetAuthorDetails(int id)
+        {
+            var query = _uow.Authors.Query()
+                  .Where(a => a.AuthorId == id)
+                  .Select(a => new AuthorDetailsDto
+                  {
+                      AuthorId = a.AuthorId,
+                      FirstName = a.FirstName,
+                      LastName = a.LastName,
+                      Books = a.Books == null
+                          ? new List<BookListDto>()
+                          : a.Books
+                              .Select(b => new BookListDto
+                              {
+                                  BookId = b.BookId,
+                                  Title = b.Title,
+                                  PublisherName = b.Publisher.Name,
+                                  Price = b.Price,
+                              }).ToList()
+                  }).FirstOrDefault();
+            if (query == null)
+            {
+                return Result<AuthorDetailsDto>.Failure("Author not found");
+            }
+            return Result<AuthorDetailsDto>.Success(query);
+
         }
 
         public Result<AuthorListDto> GetById(int id)
